@@ -11,30 +11,30 @@ my $config = plugin 'json_config';
 my $flash;
 
 sub set_flash {
-       my $message = shift;
+    my $message = shift;
 
-       $flash = $message;
+    $flash = $message;
 }
 
 sub get_flash {
 
-       my $msg = $flash;
-       $flash = "";
+    my $msg = $flash;
+    $flash = "";
 
-       return $msg;
+    return $msg;
 }
 
 sub connect_db {
-       my $dbh = DBI->connect("dbi:SQLite:dbname=".$config->{database}) or
-               die $DBI::errstr;
+    my $dbh = DBI->connect("dbi:SQLite:dbname=".$config->{database}) or
+    die $DBI::errstr;
 
-       return $dbh;
+    return $dbh;
 }
 
 sub init_db {
-       my $db = connect_db();
-       my $schema = read_file('./schema.sql');
-       $db->do($schema) or die $db->errstr;
+    my $db = connect_db();
+    my $schema = read_file('./schema.sql');
+    $db->do($schema) or die $db->errstr;
 }
 
 app->defaults( 
