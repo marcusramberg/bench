@@ -4,10 +4,13 @@ use Mojolicious::Lite;
 use DBI;
 use File::Slurp;
 
-
-# Documentation browser under "/perldoc" (this plugin requires Perl 5.10)
 plugin 'tt_renderer';
-my $config = plugin 'json_config';
+my $config = {
+    database => "dancr.db",
+    username => "admin",
+    password => "password"
+};
+
 my $flash;
 
 sub set_flash {
