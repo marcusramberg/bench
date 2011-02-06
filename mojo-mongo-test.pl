@@ -1,12 +1,12 @@
 #!/usr/bin/env perl
 
 use Mojolicious::Lite;
-use DBI;
+use MongoDB::Connection;
 use File::Slurp;
 
 plugin 'tt_renderer';
 my $config = {
-    database => "dancr.db",
+    database => "dancr",
     username => "admin",
     password => "password"
 };
@@ -29,16 +29,11 @@ sub get_flash {
 
 
 sub connect_db {
-    my $dbh = DBI->connect("dbi:SQLite:dbname=".$config->{database}) or
-    die $DBI::errstr;
+    my $db = MongoDB::Connection->new(host=>'localhost')
+      ->get_database($config->{database})
+      ->get_collection('posts');
 
-    return $dbh;
-}
-
-sub init_db {
-    my $db = connect_db();
-    my $schema = read_file('./schema.sql');
-    $db->do($schema) or die $db->errstr;
+    return $db;
 }
 
 app->defaults( 
@@ -51,14 +46,12 @@ app->defaults(
 get '/' => sub {
        my $self=shift;
        my $db = connect_db();
-       my $sql = 'select id, title, text from entries order by id desc';
-       my $sth = $db->prepare($sql) or die $db->errstr;
-       $sth->execute or die $sth->errstr;
+       my $items=$db->find();
        $self->render( 
            template =>'show_entries',
             msg     => get_flash(),
             add_entry_url => $self->url_for('/add'),
-            entries => $sth->fetchall_hashref('id'),
+            entries => [$items->all],
        );
 };
 
@@ -69,9 +62,7 @@ post '/add' => sub {
     }
 
     my $db = connect_db();
-    my $sql = 'insert into entries (title, text) values (?, ?)';
-    my $sth = $db->prepare($sql) or die $db->errstr;
-    $sth->execute($self->param('title'), $self->param('text')) or die $sth->errstr;
+    $db->insert({ title => $self->param('title'), text=> $self->param('text')});
 
     set_flash('New entry posted!');
     $self->redirect_to('/');
@@ -107,6 +98,5 @@ get '/logout' => sub {
     $self->redirect_to('/');
 };
 
-init_db();
 
 app->start;
